@@ -12,6 +12,8 @@ const AuthContextProvider = ({ children }) => {
 	}, []);
 
 	const logoutUser = () => {
+		localStorage.removeItem("token")
+		window.location.href = "/"
 	}
 
 	return <AuthContext.Provider value={{ user, setUser, logoutUser }}>

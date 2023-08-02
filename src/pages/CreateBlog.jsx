@@ -8,13 +8,31 @@ import { useEffect } from 'react';
 import axios from 'axios';
 
 const CreateBlog = () => {
+
+	const uploadToCloudinary = (img) => {
+		const formData = new FormData();
+		formData.append("file", img);
+		formData.append("upload_preset", "w1rgx4hk");
+		formData.append("folder", "blog");
+		fetch(`https://api.cloudinary.com/v1_1/dwcvssznn/image/upload`, {
+			method: "POST",
+			body: formData,
+		})
+			.then((response) => response.json())
+			.then(async (data) => {
+				setFormState({
+					...formState,
+					"mainImg": data?.secure_url
+				})
+			})
+	};
+
 	const initialState = {
 		title: "",
 		description: "",
 		author: "",
-		mainImg: "https://images.pexels.com/photos/268533/pexels-photo-268533.jpeg?cs=srgb&dl=pexels-pixabay-268533.jpg&fm=jpg",
-		tags: ["test", "blog"],
-		otherImgs: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTQMOwR-_45OiadN8CymKhw08QALAidVKLYJPA8Zgn9qS0mn2c_wbbi4c2npgeVcdD3hTs&usqp=CAU",
+		mainImg: "",
+		tags: "",
 		timeReq: ""
 	}
 	const [img, setImg] = useState('')
@@ -49,19 +67,21 @@ const CreateBlog = () => {
 				data: { ...formState, content: content }
 			})
 				.then((res) => {
-					console.log(res)
+					window.location.href = "/view/blogs"
 				})
 				.catch((err) => {
 					console.log(err)
 				})
-		}else{
+		} else {
 			axios(`https://knock-dubai-backend.vercel.app/update/${id}`, {
 				method: "PATCH",
 				data: { ...formState, content: content }
 			})
 				.then((res) => {
 					console.log(res)
-					window.location.href = "/view/blogs"
+					if (!res.data.error) {
+						window.location.href = "/view/blogs"
+					}
 				})
 				.catch((err) => {
 					console.log(err)
@@ -77,11 +97,16 @@ const CreateBlog = () => {
 	}
 
 	useEffect(() => {
-		getBlog()
+		if(localStorage.getItem("token")){
+			getBlog()
+		}else{
+			window.location.href = "/"
+		}
+		
 	}, [id]);
 
 	const getBlog = async () => {
-		if(id){
+		if (id) {
 			axios(`https://knock-dubai-backend.vercel.app/get-blog/${id}`, {
 				method: "GET",
 			})
@@ -127,16 +152,14 @@ const CreateBlog = () => {
 									<div className="w-full">
 										<label for="brand" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Main Image</label>
 										<div className='flex gap-3 items-center'>
-											<input onChange={(e) => { uploadFiles(e.target.files[0], setImg, `blog/${formState?.author}/${formState?.title}-main-img.jpg`) }} type="file" accept='image/*' name="brand" id="brand" className={img.length > 0 ? "bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500 w-[90%]" : "bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"} required="" />
+											<input onChange={(e) => { uploadToCloudinary(e.target.files[0]) }} type="file" accept='img/*' className={img.length > 0 ? "bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500 w-[90%]" : "bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"} required="" />
 											{img.length > 0 && <a href={img} target='_blank' className='text-blue-500'><BiLink /></a>}
+											{formState?.mainImg && <a href={formState?.mainImg} target='_blank'><BiLink /></a>}
 										</div>
 									</div>
-									<div className="w-full">
-										<label for="brand" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Other Image</label>
-										<div className='flex gap-3 items-center'>
-											<input onChange={(e) => { uploadFiles(e.target.files[0], setOtherImage, `blog/other/${formState?.author}/${formState?.title}-main-img.jpg`) }} type="file" accept='image/*' name="brand" id="brand" className={otherImage.length > 0 ? "bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500 w-[90%]" : "bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"} required="" />
-											{otherImage.length > 0 && <a href={otherImage} target='_blank' className='text-blue-500'><BiLink /></a>}
-										</div>
+									<div className="sm:col-span-2">
+										<label for="tags" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Tags</label>
+										<input type="text" value={formState?.tags} onChange={handleChange} name="tags" id="tags" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="Tags" required="" />
 									</div>
 									<div className="sm:col-span-2">
 										<label for="name" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Content</label>

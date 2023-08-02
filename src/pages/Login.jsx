@@ -29,6 +29,7 @@ const Login = () => {
 			.then((res) => {
 				console.log(res)
 				if(!res.data.error){
+					localStorage.setItem("token", res.data.token)
 					navigate("/blog")
 				}
 			})

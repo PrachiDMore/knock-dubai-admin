@@ -11,7 +11,6 @@ const Contact = () => {
 		axios("https://knock-dubai-backend.vercel.app/contact")
 		.then((res) => {
 			setContacts(res.data.contacts)
-			console.log(res.data.contacts)
 		})
 	}, []);
 
@@ -26,7 +25,11 @@ const Contact = () => {
 	}
 
 	useEffect(() => {
-		setSearchContacts(contacts);
+		if(localStorage.getItem("token")){
+			setSearchContacts(contacts);
+		}else{
+			window.location.href = "/"
+		}
 	}, [contacts]);
 
 	const handleDelete = async (id) => {

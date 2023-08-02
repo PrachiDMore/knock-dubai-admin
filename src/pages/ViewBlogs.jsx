@@ -20,7 +20,11 @@ const ViewBlogs = () => {
 	}
 
 	useEffect(() => {
-		setSearchBlogs(blogs);
+		if(localStorage.getItem("token")){
+			setSearchBlogs(blogs);
+		}else{
+			window.location.href = "/"
+		}
 	}, [blogs]);
 
 	const handleDelete = async (id) => {
