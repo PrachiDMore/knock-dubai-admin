@@ -6,9 +6,12 @@ import { BiLink } from 'react-icons/bi';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useEffect } from 'react';
 import axios from 'axios';
+import { useRef } from 'react';
 
 const CreateBlog = () => {
-
+	const cloudinaryRef = useRef()
+	const [otherImage, setOtherImage] = useState([])
+	const buttonRef = useRef()
 	const uploadToCloudinary = (img) => {
 		const formData = new FormData();
 		formData.append("file", img);
@@ -26,7 +29,29 @@ const CreateBlog = () => {
 				})
 			})
 	};
+	let data = []
 
+	useEffect(() => {
+		const cloudName = "hzxyensd5"; // replace with your own cloud name
+		const uploadPreset = "aoh4fpwm"; // replace with your own upload preset
+		cloudinaryRef.current = window.cloudinary;
+		buttonRef.current = window.cloudinary.createUploadWidget(
+			{
+				cloudName: cloudName,
+				uploadPreset: uploadPreset,
+				multiple: true,
+				folder: "blog-other",
+			},
+			(error, result) => {
+				if (!error && result && result.event === "success") {
+					data.push(result.info.secure_url)
+				}
+				if (result.event === "queues-end") {
+					setOtherImage(data)
+				}
+			}
+		);
+	}, []);
 	const initialState = {
 		title: "",
 		description: "",
@@ -36,7 +61,6 @@ const CreateBlog = () => {
 		timeReq: ""
 	}
 	const [img, setImg] = useState('')
-	const [otherImage, setOtherImage] = useState('')
 	const [formState, setFormState] = useState(initialState);
 	const [content, setContent] = useState("");
 	const navigate = useNavigate()
@@ -64,7 +88,7 @@ const CreateBlog = () => {
 		if (!id) {
 			axios("https://knock-dubai-backend.vercel.app/create", {
 				method: "POST",
-				data: { ...formState, content: content }
+				data: { ...formState, content: content, otherImgs: otherImage }
 			})
 				.then((res) => {
 					window.location.href = "/view/blogs"
@@ -75,10 +99,9 @@ const CreateBlog = () => {
 		} else {
 			axios(`https://knock-dubai-backend.vercel.app/update/${id}`, {
 				method: "PATCH",
-				data: { ...formState, content: content }
+				data: { ...formState, content: content, otherImgs: otherImage }
 			})
 				.then((res) => {
-					console.log(res)
 					if (!res.data.error) {
 						window.location.href = "/view/blogs"
 					}
@@ -97,12 +120,12 @@ const CreateBlog = () => {
 	}
 
 	useEffect(() => {
-		if(localStorage.getItem("token")){
+		if (localStorage.getItem("token")) {
 			getBlog()
-		}else{
+		} else {
 			window.location.href = "/"
 		}
-		
+
 	}, [id]);
 
 	const getBlog = async () => {
@@ -149,13 +172,19 @@ const CreateBlog = () => {
 										<label for="name" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Time Required</label>
 										<input type="text" value={formState?.timeReq} onChange={handleChange} name="timeReq" id="timeReq" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="Time Required" required="" />
 									</div>
-									<div className="w-full">
+									<div className="sm:col-span-2">
 										<label for="brand" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Main Image</label>
 										<div className='flex gap-3 items-center'>
-											<input onChange={(e) => { uploadToCloudinary(e.target.files[0]) }} type="file" accept='img/*' className={img.length > 0 ? "bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500 w-[90%]" : "bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"} required="" />
+											<input onChange={(e) => { uploadToCloudinary(e.target.files[0]) }} type="file" accept='img/*' className={img.length > 0 ? "bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" : "bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"} required="" />
 											{img.length > 0 && <a href={img} target='_blank' className='text-blue-500'><BiLink /></a>}
 											{formState?.mainImg && <a href={formState?.mainImg} target='_blank'><BiLink /></a>}
 										</div>
+									</div>
+									<div className="sm:col-span-2">
+										<label for="name" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Other Images</label>
+										<div onClick={() => {
+											buttonRef.current.open()
+										}} type="text" readOnly name="name" id="title" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 py-3 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="choose multiple images" required="">{otherImage?.length === 0 ? "Choose multiple images" : `Images uploaded: ${otherImage.length}`}</div>
 									</div>
 									<div className="sm:col-span-2">
 										<label for="tags" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Tags</label>
